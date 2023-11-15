@@ -57,7 +57,7 @@
             <div class="sel-item" v-for="(sel, index) in condition.sels" :key="index">
               <div>
                 <!-- <input v-if="index > 0 && switchvalue==false" name="group1" type="checkbox" value="" v-model="checkData[sel.name]" @change="checkboxGroup1Change(sel.name)" /> -->
-                <span class="title">{{sel.text}}</span>
+                <span class="title">{{sel.text}}asd</span>
               </div>
               <select :class="'group1-sel-'+ sel.name" style="font-size:12pt;max-height: 28px;" :name="sel.name"
                 v-model="queryData[sel.name]" @change="selectorChange(sel, index)">
