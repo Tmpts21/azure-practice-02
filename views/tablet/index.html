@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="viewport"
+    content="width=width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0,minimum-scale=1.0">
+  <link rel="shortcut icon" href="http://www.ibm.com/favicon.ico" />
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+  <meta http-equiv="Content-Script-Type" content="text/javascript">
+  <!-- babel.min.js -->
+  <script src="./lib/babel-browser.js"></script>
+  <!-- vue -->
+  <script src="./lib/vue_2.5.16.js"></script>
+  <!-- axios -->
+  <script src="./lib/axios.js"></script>
+  <!-- cookies -->
+  <script src="./lib/vue-cookies.js"></script>
+  <!-- css -->
+  <link href="./tablet/localstyle.css" rel="stylesheet" />
+  <link rel="stylesheet" href="./lib/element-ui-2.13.0.css">
+  <!-- element -->
+  <script src="./lib/element-ui-2.13.0.js"></script>
+  <!-- main js -->
+  <script type="text/babel" src="./tablet/index.js"></script>
+  <title>KnowledgeDB</title>
+</head>
+
+<body id="ibm-com" class="ibm-type" oncontextmenu="return false;">
+  <div class="" id="app" v-cloak>
+    <!-- LEADSPACE_BEGIN -->
+    <div id="ibm-leadspace-head">
+      <div id="ibm-leadspace-body" class="ibm-padding-bottom-30">
+        <h1>保全ナレッジDB検索システム</h1>
+        <i class="el-icon-user-solid" style="color: #FFF;margin-right: 5px;"></i>
+        <div style="color: #FFF;margin-right: 20px;cursor: pointer;display: flex;align-items:center"
+          v-if="name" @click="showDownList()">
+          <span style="font-size: 14px;">{{name}}</span>
+          <span style="display: block;margin-top: 1px;margin-left: 4px;"><i class="el-icon-arrow-down"
+              style="color: #FFF;font-size: 14px;"></i></span>
+        </div>
+      </div>
+    </div>
+    <div v-if="showLogout">
+      <div class="user-downlist">
+        <a class="login-link" href="/logout">ログアウト</a>
+      </div>
+    </div>
+    <div class="condition-panel">
+      <!--カテゴリ選択(故障設備、部品)--START-->
+      <div v-if="showCategory">
+        <!--設備--START-->
+        <div class="apparatus">
+          <div class="condition-title-box">設備</div>
+          <div class="sels-container group1-border" style="width: 96%">
+            <div class="sel-item" v-for="(sel, index) in condition.sels" :key="index">
+              <div>
+                <!-- <input v-if="index > 0 && switchvalue==false" name="group1" type="checkbox" value="" v-model="checkData[sel.name]" @change="checkboxGroup1Change(sel.name)" /> -->
+                <span class="title">{{sel.text}}</span>
+              </div>
+              <select :class="'group1-sel-'+ sel.name" style="font-size:12pt;max-height: 28px;" :name="sel.name"
+                v-model="queryData[sel.name]" @change="selectorChange(sel, index)">
+                <option style="font-size:14pt;word-break:break-all" v-for="(opt, index) in sel.options" :key="index"
+                  :value="opt.name">{{ opt.name }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <!--設備--END-->
+        <div class="apparatus">
+          <div v-if="showCategory"></div>
+          <div class="condition-title-box">部品</div>
+          <div class="parent" style="width: 95%;">
+            <div class="sels-container group1-border" style="width: 40%;">
+              <div class="sel-item" style="min-width: 90px;" v-for="(sel2, index2) in condition2.sels" :key="index2">
+                <div>
+                  <span class="title">{{sel2.text}}</span>
+                </div>
+                <select :class="'group2-sel-'+ sel2.name" style="font-size:12pt;max-height: 28px" :name="sel2.name"
+                  v-model="queryData[sel2.name]" @change="selectorChange2(sel2, index2)">
+                  <option style="font-size:14pt;" v-for="(opt2, index2) in sel2.options" :key="index2"
+                    :value="opt2.name">{{ opt2.name }}</option>
+                </select>
+              </div>
+            </div>
+            <div class="apparatus leftMarginStyle" style="width: 28%;">
+              <div class="condition-title-box">専門</div>
+              <div class="sels-container group1-border period">
+                <div class="sel-item" v-for="(sel3, index3) in condition3.sels" :key="index3"
+                  style="margin-top: 0.16rem">
+                  <div>
+                    <!-- <input name="group3" v-if="switchvalue==false" type="checkbox" value="" v-model="checkData[sel3.name]" @change="checkboxGroup2Change(sel3.name)"/> -->
+                    <span class="title">{{sel3.text}}</span></div>
+                  <select style="font-size:12pt;width: 120px" :name="sel3.name" v-model="queryData[sel3.name]"
+                    @change="selectorChange3(sel3, index3)">
+                    <option style="font-size:14pt;" v-for="(opt3, index3) in sel3.options" :key="index3"
+                      :value="opt3.name">{{ opt3.name }}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <!--期間start-->
+            <div class="apparatus period leftMarginStyle">
+              <div class="condition-title-box">期間</div>
+              <div class="sels-container group1-border period" style="flex-flow: column;">
+                <div class="dateText">
+                  <div>
+                    <el-checkbox class="checkbox-date" v-model="datechecked" :disabled="dateRangeDisabled">
+                      <span class="dateLabelText">期間指定</span>
+                    </el-checkbox>
+                  </div>
+                  <div class="initDateText">
+                    <div class="durationText">
+                      <label>現在の検索可能期間</label>
+                    </div>
+                    <div class="showInitDate">{{showInitDate}}</div>
+                    <div>
+                    </div>
+                  </div>
+                </div>
+                <div class="DatePicker">
+                  <div class="DateBox">
+                    <el-date-picker v-model="selectStartDate" @change="selectDatePicker()" format="yyyy-MM-dd"
+                      value-format="yyyy-MM-dd" clear-icon='' size="mini" type="date"
+                      :picker-options="pickerOptions_startDate" :disabled="dateRangeDisabled">
+                    </el-date-picker>
+                  </div>
+                  <div class="symbol">~</div>
+                  <div class="DateBox">
+                    <el-date-picker v-model="selectEndDate" @change="selectDatePicker()" format="yyyy-MM-dd"
+                      value-format="yyyy-MM-dd" clear-icon='' size="mini" type="date"
+                      :picker-options="pickerOptions_endDate" :disabled="dateRangeDisabled">
+                    </el-date-picker>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!--期間end-->
+        </div>
+        <!--カテゴリ選択(故障設備、部品)-END-->
+      </div>
+      <!--キーワード選択orテキスト入力--STRAT-->
+      <div v-if="showKeywordText" class="AllProductFacet">
+        <div class="middlePart">
+          <div class="apparatus_facet">
+            <div class="condition-title-box">キーワード</div>
+            <!--キーワード種類を絞り込む-->
+            <div style="width: 100%;">
+              <div class="facetStyle">
+                <!--テキスト入力ボタン-->
+                <div class="textInput" style="width: 65%;">
+                  <div><img src="./tablet/icons/text.png" class="imageText" @click="changeTextAreaShow()"></div>
+                  <div>
+                    <textarea id="query" rows="2" cols="200" maxlength="200" placeholder="最大200字" v-if="textAreaShow"
+                      v-model="queryData[condition['inputTextField']]" @focus="texAreaFocus"></textarea>
+                  </div>
+                </div>
+
+                <div class="keyWords">
+                  <div v-if="isFacetLabelShow" class="group-filter" style="width:90%">
+                    <div class="let-right" style="display:inline-block">
+                      <a href="#" class="filter-btn" @click="changeColor('all')" :style={background:darkColorAll}>全て</a>
+                      <a href="#" class="filter-btn" @click="changeColor('part')"
+                        :style={background:darkColorPart}>部位・部品名</a>
+                      <a href="#" class="filter-btn" @click="changeColor('noun')"
+                        :style={background:darkColorNoun}>一般名詞</a>
+                      <a href="#" class="filter-btn" @click="changeColor('verb')"
+                        :style={background:darkColorVerb}>動詞</a>
+                      <a href="#" class="filter-btn" @click="changeColor('adjective')"
+                        :style={background:darkColorAdjective}>形容詞</a>
+                    </div>
+                  </div>
+                </div>
+                <!-- キーワードが３語以上選択された場合、もしくは自由テキストが入力された場合にメッセージは非表示となる -->
+                <el-alert
+                title="目的の履歴を検索するためには3語以上のキーワード選択を推奨します。"
+                type="warning"
+                :closable="false"
+                :class="{ 'hidden': !alertShow }"
+                show-icon
+                style="font-size: smaller; background-color: #ebebeb; padding: 3.5px 13px;">
+                </el-alert>
+                <div v-if="isFacetLabelShow && dataFacets.length > 0"
+                  style="line-height: 27px;margin: 3px 8px; border:0.5px solid #c0c0c0; width: 91%;padding: 5px 0px 5px 5px">
+                  <span v-for="facet in dataFacets">
+                    <el-button class="facetText" @click="addfacetword(facet.label)" type="info">{{facet.label}}
+                    </el-button>
+                  </span>
+                </div>
+                <div v-if="dataFacets.length == 0"
+                  style="line-height: 27px;margin: 3px 8px; border:0.5px solid #c0c0c0; width: 91%;padding: 5px 0px 5px 5px">
+                  <span>データなし</span>
+                </div>
+              </div>
+              <div class="border-line" v-if="keyWordTexts.length > 0"></div>
+              <div style="margin-bottom: 10px;">
+                <m-keywordtext v-for="(keyWords, index) in keyWordTexts" :key="index" :keywords="keyWords"
+                  @remove-facet-value="updatekeyWordTexts">
+                </m-keywordtext>
+              </div>
+              <div class="notice" v-cloak>{{textAreaNotice}}</div>
+            </div>
+          </div>
+          <!-- 製品の種類を示すボタン、工場のボックスにチェックが付くstart -->
+          <div class="apparatus_factory">
+            <div class="condition-title-box searchFactory">検索表示<div>工場</div></div>
+            <div class="factoryGroup">
+              <div class="factoryGroupBtn">
+                <button class="filter-btn factoryBtn" v-for="(value, key) in productConfig" @click="changeBackGround(key)"
+                  :key="key"
+                  :disabled=switchvalue
+                  :style="{background:key== currntTab ? 'rgb(90, 105, 162)' : 'rgb(143, 170, 220)',cursor:switchvalue ? 'not-allowed' : 'pointer'}">
+                  {{ key }}</button>
+              </div>
+              <div class="inputGroup">
+                <el-checkbox-group v-model="checkList">
+                  <el-checkbox v-for="(item, index) in allFactoryConfig" :label="item" :key="index"
+                    class="checkbox_button" :disabled=switchvalue>
+                  </el-checkbox>
+                </el-checkbox-group>
+              </div>
+            </div>
+          </div>
+          <!-- 製品の種類を示すボタン、工場のボックスにチェックが付く end -->
+        </div>
+      </div>
+      <div class="ask-setting-panel" v-show="showKeywordText">
+        <div class="setting">
+          <div class="score-threshold" style="margin-left: 0.5rem;">
+            <a href="#" id="clear_btn" class="rounded-btn" @click="clear('false')">クリア</a>
+          </div>
+        </div>
+        <div class="search-btn">
+          <a href="#" id="ask_btn" style="padding: 0px;margin-right: 16px;" class="rounded-btn"
+            @click="search('firstSearch')">
+            <div class="searchText">検索</div>
+          </a>
+        </div>
+        <div class="switchButton">
+          <span class="condition-text"
+            :style="{color:switchvalue== true ? conditionLabelColorOn : conditionLabelColorOFF}">
+            条件固定
+          </span>
+          <div class="switchItem">
+            <el-switch v-model="switchvalue" active-color="#4990e2" inactive-color="#E0E0E0" :width=50
+              @change="switchChangeEvent()">
+            </el-switch>
+          </div>
+        </div>
+      </div>
+      <!--キーワード選択orテキスト入力--END-->
+      <div class="loading" v-show="loading">
+        <img src="./tablet/icons/watson-progress-indicator.gif" alt="loading" v-cloak>
+      </div>
+      <!--検索一覧表示--START-->
+      <div class="searchlist" v-if="showSearchList">
+        <div class="condition-title">
+          <span>現在選択の設備・故障部品</span>
+          <span class="dateRangeShowText" v-if="datechecked">{{dateRangeShow}}</span>
+        </div>
+        <div class="category-content">
+          <m-category v-for="(value, key) in selectedCategory" :key="key" :text="key" :value="value">
+          </m-category>
+        </div>
+        <div class="condition-title">選択されたキーワード</div>
+        <div class="labelFacet">
+          <span class="labelFacetList" v-show="showFacetLabel"
+            v-for="(value,index) in keyWordTexts">{{value.facetword}}</span>
+          <span>{{queryData[condition['inputTextField']]}}</span>
+        </div>
+        <div class="ask-setting-button">
+          <div class="setting">
+            <div class="backBtn">
+              <a href="#" id="back_btn" class="back-btn" @click="goBackKeywordText()">検索画面に戻る</a>
+            </div>
+            <div v-if="gobackSimShow" class="backBtn">
+              <a href="#" id="back_result_btn" class="back-btn" @click="goBackSimlarResult()">１つ前の検索結果</a>
+            </div>
+          </div>
+          <div class="askAnswer">
+            <div class="score-threshold">
+              <a href="#" class="rounded-btn" @click="sortByAssociate()" :style={background:indexSort}>関連性順</a>
+            </div>
+            <div class="score-threshold">
+              <a href="#" class="rounded-btn" @click="sortByOccurDate()" :style={background:occurDateSort}>発生日順</a>
+            </div>
+            <div class="score-threshold">
+              <a href="#" id="complete" class="completed-btn" @click="complete('false')">作業完了</a>
+            </div>
+            <button v-if="rateCommentonoff" id="ask_btn" style="padding: 0px;min-width: 150px;border: none;" class="rounded-btn"
+              :disabled="commentDisabled" @click="rateComment()">
+              <div>アンケート</div>
+            </button>
+          </div>
+        </div>
+        <m-searchlist ref="searchtable" :searchlist="searchList" :disabled="disabled" :similarloading="similarLoading"
+          @show-detail="showDetail" @go-similar-search-event="receiveSimilarEvent" @rate-eval-event="updateEval">
+        </m-searchlist>
+
+      </div>
+      <!--検索一覧表示--END-->
+
+      <!--検索結果詳細表示--START-->
+      <div :class="{'articles-panel': searchDetailInfo.length > 0}" v-if="showSearchDetail">
+        <m-searchdetail v-for="(article, index) in searchDetailInfo" :key="index"
+          :article="article" :propertyfileds="propertyFileds" :resultFields="resultFields"
+          :ref="'child-article-' + index" :disabled="disabled"
+          :secondtextonoff="secondtextonoff" :thirdtextonoff="thirdtextonoff" :isfailuresituation="isfailuresituation"
+          @go-similar-search-detail-event="receiveSimilarDetailEvent" @go-back-search-list="goBackSearchList"
+          @rate-parent-eval="rateParentEval" @rate-eval-event="updateEval" :similaronoff="similaronoff"
+          >
+        </m-searchdetail>
+      </div>
+      <!--検索結果詳細表示--END-->
+      <div class="no-article-notice" style="display: none" v-if="searchEnd && articles.length === 0" v-cloak>
+        <hr>
+        <span>NO RESULTS FOUND</span>
+      </div>
+    </div>
+    <m-question ref="answerSurvey" :questionanswer="questionAnswer" :showquestion="showQuestion" :usercomment="userComment" :useranswer="userAnswer" :disabled="answerDisabled"  @get-comment-event="insertSurveyList" @update-usercomment="updateUserComment" >
+    </m-question>
+  </div>
+</body>
+
+</html>
