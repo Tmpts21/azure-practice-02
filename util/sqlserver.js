@@ -11,7 +11,7 @@ var config = {
   database: dbConfig.config.database,
   port: dbConfig.config.port,
   options: {
-    encrypt: false, // use this if you're on azure
+    encrypt: true, // use this if you're on azure
     // trustServerCertificate: true
   },
   pool: {
